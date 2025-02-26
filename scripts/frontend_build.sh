@@ -64,23 +64,54 @@ EOL
     # Hacer una copia de seguridad
     cp "$PROJECT_ROOT/docker-compose.yml" "$PROJECT_ROOT/docker-compose.yml.bak"
     
-    # Actualizar configuración del servicio app
-    sed -i '/app:/,/depends_on:/c\
-  app:\
-    build:\
-      context: ./app\
-      dockerfile: Dockerfile.prod\
-    ports:\
-      - "3000:3000"\
-    environment:\
-      - NODE_ENV=production\
-      - NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321\
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-your-anon-key}\
-    networks:\
-      - chatree-network\
-    depends_on:\
-      - supabase\
-    restart: unless-stopped' "$PROJECT_ROOT/docker-compose.yml"
+    # Usar un enfoque diferente para modificar el archivo
+    # En lugar de usar sed, hacemos una modificación más controlada
+    print_message "info" "Modificando servicio 'app' en docker-compose.yml"
+    
+    # Leer el contenido actual
+    local docker_compose="$PROJECT_ROOT/docker-compose.yml"
+    local temp_file="$PROJECT_ROOT/docker-compose.yml.tmp"
+    
+    # Construir el nuevo contenido para el servicio app
+    local new_app_service="  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile.prod
+    ports:
+      - \"3000:3000\"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=\${SUPABASE_ANON_KEY:-your-anon-key}
+    networks:
+      - chatree-network
+    depends_on:
+      - supabase
+    restart: unless-stopped"
+    
+    # Usar awk para reemplazar la sección app: hasta el siguiente servicio
+    awk -v new_service="$new_app_service" '
+    /^  app:/ {
+        print new_service;
+        in_app_section = 1;
+        next;
+    }
+    /^  [a-zA-Z]/ && in_app_section {
+        in_app_section = 0;
+    }
+    !in_app_section {
+        print;
+    }
+    ' "$docker_compose" > "$temp_file"
+    
+    # Verificar que la modificación fue exitosa
+    if [ -s "$temp_file" ]; then
+        mv "$temp_file" "$docker_compose"
+        print_message "success" "docker-compose.yml actualizado correctamente"
+    else
+        print_message "error" "Error al actualizar docker-compose.yml"
+        return 1
+    fi
     
     print_message "success" "Frontend preparado correctamente"
     return 0

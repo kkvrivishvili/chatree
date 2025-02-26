@@ -4,11 +4,11 @@ WORKDIR /app
 
 COPY package.json ./
 
-RUN npm install
+RUN pnpm install
 
 # Copiar el código fuente
 COPY . .
 
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+CMD ["pnpm", "run", "dev"]
