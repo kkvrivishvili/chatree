@@ -56,6 +56,45 @@ check_port() {
     return 0
 }
 
+# Verificar la estructura del proyecto
+check_project_structure() {
+    print_message "info" "Verificando estructura del proyecto..."
+    
+    # Directorios críticos que deben existir
+    local critical_dirs=(
+        "$PROJECT_ROOT/Server/supabase"
+        "$PROJECT_ROOT/Server/langchain"
+        "$PROJECT_ROOT/app/src"
+    )
+    
+    local all_ok=true
+    
+    for dir in "${critical_dirs[@]}"; do
+        if [ ! -d "$dir" ]; then
+            print_message "error" "Directorio crítico no encontrado: $dir"
+            all_ok=false
+        else
+            print_message "success" "Directorio encontrado: $dir"
+        fi
+    done
+    
+    # Verificar archivos críticos
+    if [ ! -f "$PROJECT_ROOT/docker-compose.yml" ]; then
+        print_message "error" "Archivo docker-compose.yml no encontrado"
+        all_ok=false
+    else
+        print_message "success" "Archivo docker-compose.yml encontrado"
+    fi
+    
+    if $all_ok; then
+        print_message "success" "Estructura del proyecto verificada correctamente"
+        return 0
+    else
+        print_message "error" "Existen problemas en la estructura del proyecto"
+        return 1
+    fi
+}
+
 # Verificar todas las dependencias
 check_dependencies() {
     print_message "info" "Verificando dependencias necesarias..."
@@ -73,6 +112,9 @@ check_dependencies() {
     check_port 11434 "Ollama" || return 1
     check_port 6379 "Redis" || return 1
     check_port 8081 "Redis Commander" || return 1
+    
+    # Verificar estructura del proyecto
+    check_project_structure || return 1
     
     print_message "success" "Todas las dependencias están verificadas"
     return 0

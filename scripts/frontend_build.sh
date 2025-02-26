@@ -27,13 +27,13 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar dependencias
-RUN npm ci
+RUN pnpm i
 
 # Copiar código fuente
 COPY . .
 
 # Construir aplicación
-RUN npm run build
+RUN pnpm run build
 
 # Etapa de producción
 FROM node:20-alpine AS runner
@@ -51,7 +51,7 @@ COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["pnpm", "start"]
 EOL
         print_message "success" "Dockerfile de producción creado"
     else

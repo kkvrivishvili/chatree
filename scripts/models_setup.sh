@@ -55,7 +55,7 @@ setup_models() {
 check_services() {
     print_message "info" "Verificando estado de servicios..."
     
-    local services=("supabase-db" "supabase" "ollama" "redis" "langchain-server" "app")
+    local services=("supabase-db" "supabase" "ollama" "redis" "redis-commander" "langchain-server" "app")
     local all_ok=true
     
     for service in "${services[@]}"; do

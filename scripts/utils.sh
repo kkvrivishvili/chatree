@@ -58,9 +58,25 @@ check_root() {
 show_info() {
     print_message "header" "📋 Servicios disponibles:"
     echo -e "${YELLOW}- Frontend:${NC} http://localhost:3000"
+    echo -e "  ${CYAN}Accede a la aplicación principal de Chatree${NC}"
+    
     echo -e "${YELLOW}- Supabase Studio:${NC} http://localhost:54323"
+    echo -e "  ${CYAN}Administra la base de datos, modifica tablas y ejecuta consultas SQL${NC}"
+    
     echo -e "${YELLOW}- API de LangChain:${NC} http://localhost:5000/docs"
+    echo -e "  ${CYAN}Explora y prueba los endpoints de la API de LangChain${NC}"
+    
     echo -e "${YELLOW}- Redis Commander:${NC} http://localhost:8081"
+    echo -e "  ${CYAN}Visualiza y administra las claves almacenadas en Redis${NC}"
+    
+    echo -e "\n${MAGENTA}Credenciales de desarrollo:${NC}"
+    echo -e "${YELLOW}- Base de datos:${NC} postgres:${GREEN}postgres123${NC} (Puerto: 54322)"
+    echo -e "${YELLOW}- Redis:${NC} Contraseña: ${GREEN}redis123${NC} (Puerto: 6379)"
+    
+    echo -e "\n${MAGENTA}Comandos útiles:${NC}"
+    echo -e "${YELLOW}- Ver logs:${NC} docker compose logs -f [servicio]"
+    echo -e "${YELLOW}- Reiniciar servicio:${NC} docker compose restart [servicio]"
+    echo -e "${YELLOW}- Actualizar contenedores:${NC} docker compose up -d --build"
     echo ""
 }
 

@@ -37,15 +37,27 @@ El proyecto utiliza las siguientes tecnologías:
 
 > **IMPORTANTE**: Antes de crear nuevos archivos, analiza el código existente en la ubicación correspondiente para mantener la coherencia y evitar duplicaciones. Toda la lógica debe estar centralizada en sus carpetas respectivas.
 
-```
-chatree/
-├── app/                   # Aplicación frontend (Next.js)
-├── Server/
-│   ├── langchain/         # Servidor LangChain para gestión de agentes
-│   ├── supabase/          # Configuración y migraciones de Supabase
-│   └── ollama/            # Configuración de Ollama (modelos, etc.)
-├── docker-compose.yml     # Configuración de Docker para todo el proyecto
-└── .env                   # Variables de entorno
+## Configuración del Entorno
+
+Chatree utiliza un sistema centralizado de variables de entorno para simplificar la configuración y garantizar la coherencia en todo el proyecto:
+
+1. **Archivo `.env` centralizado**: Todas las variables se definen en un único archivo en la raíz del proyecto
+2. **Verificación automática**: El sistema comprueba la presencia y validez de las variables críticas
+3. **Consistencia entre servicios**: Todos los contenedores Docker y Next.js utilizan las mismas variables
+
+Para más detalles sobre este sistema, consulta el archivo [ENV_CONFIG.md](ENV_CONFIG.md).
+
+### Inicio Rápido
+
+Para iniciar el proyecto:
+
+```bash
+# Clonar el repositorio
+git clone https://github.com/tuusuario/chatree.git
+cd chatree
+
+# Iniciar el sistema (configura variables y servicios automáticamente)
+./start.sh
 ```
 
 ## Requisitos
@@ -213,6 +225,63 @@ Para configurar correctamente la autenticación, sigue estos pasos:
 - Mejorar la gestión de perfiles de usuario
 - Implementar verificación en dos pasos
 
+## Cómo iniciar el entorno
+
+```bash
+# Clonar el repositorio
+git clone https://github.com/yourusername/chatree.git
+cd chatree
+
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus credenciales
+
+# Iniciar servicios
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f
+```
+
+## Acceso a servicios
+
+- Frontend: http://localhost:3000
+- Supabase Studio: http://localhost:54323
+- API de LangChain: http://localhost:5000/docs
+- Redis Commander: http://localhost:8081
+
+## Solución de problemas comunes
+
+### CORS y autenticación
+
+Si experimentas problemas de CORS al intentar acceder desde el frontend al backend de Supabase, verifica:
+
+1. En `Server/supabase/.env` configura correctamente:
+   ```
+   SUPABASE_PUBLIC_SITE_URL=http://localhost:3000
+   SUPABASE_EXTRA_HEADERS=Access-Control-Allow-Origin: http://localhost:3000
+   ```
+
+2. En `app/src/middleware.ts` asegúrate de tener configurados los headers CORS:
+   ```typescript
+   response.headers.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+   response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+   response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Client-Info');
+   response.headers.set('Access-Control-Allow-Credentials', 'true');
+   ```
+
+3. Para problemas de TypeScript con `redirectTo` o `emailRedirectTo`, añade la aserción de tipo `as string`:
+   ```typescript
+   options: {
+     redirectTo: callbackUrl || `${window.location.origin}/dashboard/overview` as string
+   }
+   ```
+
+4. Recuerda reiniciar los servicios después de cualquier cambio:
+   ```bash
+   cd Server/supabase && docker compose restart
+   ```
+
 ## Reglas de Desarrollo (Windsurf Rules)
 
 ### Organización del Código
@@ -295,60 +364,3 @@ Para configurar correctamente la autenticación, sigue estos pasos:
    - Ajustar parámetros de contexto y temperatura
    - Implementar técnicas de compresión de prompt
    - Cachear respuestas comunes
-
-## Cómo iniciar el entorno
-
-```bash
-# Clonar el repositorio
-git clone https://github.com/yourusername/chatree.git
-cd chatree
-
-# Configurar variables de entorno
-cp .env.example .env
-# Editar .env con tus credenciales
-
-# Iniciar servicios
-docker-compose up -d
-
-# Ver logs
-docker-compose logs -f
-```
-
-## Acceso a servicios
-
-- Frontend: http://localhost:3000
-- Supabase Studio: http://localhost:54323
-- API de LangChain: http://localhost:5000/docs
-- Redis Commander: http://localhost:8081
-
-## Solución de problemas comunes
-
-### CORS y autenticación
-
-Si experimentas problemas de CORS al intentar acceder desde el frontend al backend de Supabase, verifica:
-
-1. En `Server/supabase/.env` configura correctamente:
-   ```
-   SUPABASE_PUBLIC_SITE_URL=http://localhost:3000
-   SUPABASE_EXTRA_HEADERS=Access-Control-Allow-Origin: http://localhost:3000
-   ```
-
-2. En `app/src/middleware.ts` asegúrate de tener configurados los headers CORS:
-   ```typescript
-   response.headers.set('Access-Control-Allow-Origin', 'http://localhost:3000');
-   response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-   response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Client-Info');
-   response.headers.set('Access-Control-Allow-Credentials', 'true');
-   ```
-
-3. Para problemas de TypeScript con `redirectTo` o `emailRedirectTo`, añade la aserción de tipo `as string`:
-   ```typescript
-   options: {
-     redirectTo: callbackUrl || `${window.location.origin}/dashboard/overview` as string
-   }
-   ```
-
-4. Recuerda reiniciar los servicios después de cualquier cambio:
-   ```bash
-   cd Server/supabase && docker compose restart
-   ```

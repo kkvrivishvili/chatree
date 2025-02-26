@@ -4,6 +4,7 @@
 # Chatree - Script de inicialización principal
 # ------------------------------------------------------------------------------
 # Este script orquesta la ejecución de módulos para inicializar Chatree
+# utilizando un sistema de variables de entorno centralizado
 # ------------------------------------------------------------------------------
 
 # Configuraciones globales
@@ -21,12 +22,13 @@ fi
 
 # Cargar módulos
 source "$SCRIPTS_DIR/utils.sh"
-source "$SCRIPTS_DIR/check_deps.sh"
+source "$SCRIPTS_DIR/check_deps.sh" 
 source "$SCRIPTS_DIR/docker_setup.sh"
 source "$SCRIPTS_DIR/env_setup.sh"
 source "$SCRIPTS_DIR/frontend_build.sh"
 source "$SCRIPTS_DIR/db_setup.sh"
 source "$SCRIPTS_DIR/models_setup.sh"
+source "$SCRIPTS_DIR/setup_modules.sh"
 
 # Función principal
 main() {
@@ -40,24 +42,39 @@ main() {
     print_message "step" "Paso 1: Verificando dependencias"
     check_dependencies || exit 1
     
-    # Configurar variables de entorno
-    print_message "step" "Paso 2: Configurando variables de entorno"
+    # Configurar variables de entorno centralizadas
+    print_message "step" "Paso 2: Configurando variables de entorno centralizadas"
+    print_message "info" "Todas las variables se gestionan desde un único archivo .env en la raíz"
     setup_env || exit 1
     
     # Configurar Docker
     print_message "step" "Paso 3: Configurando Docker"
     setup_docker || exit 1
     
-    # Construir el frontend
-    print_message "step" "Paso 4: Preparando frontend"
-    build_frontend || print_message "warning" "Advertencia: Problemas al preparar el frontend"
+    # Confirmar continuación
+    print_message "info" "Configuración básica completada. Los siguientes pasos iniciarán los servicios."
+    read -p "¿Deseas continuar con la inicialización de servicios? (s/n): " continue_setup
+    if [[ ! "$continue_setup" =~ ^[Ss]$ ]]; then
+        print_message "info" "Inicialización cancelada por el usuario"
+        exit 0
+    fi
     
     # Iniciar servicios
-    print_message "step" "Paso 5: Iniciando servicios"
+    print_message "step" "Paso 4: Iniciando servicios"
+    print_message "info" "Los servicios utilizarán las variables centralizadas de .env"
     if ! docker compose up -d; then
         print_message "error" "Fallo al iniciar servicios. Abortando."
         exit 1
     fi
+    
+    # Verificar servicios iniciados
+    print_message "info" "Verificando estado inicial de servicios..."
+    docker compose ps
+    
+    # Preparar el frontend (una vez que los servicios están en ejecución)
+    print_message "step" "Paso 5: Preparando frontend"
+    print_message "info" "El frontend utilizará variables de entorno desde el archivo .env centralizado"
+    build_frontend || print_message "warning" "Advertencia: Problemas al preparar el frontend"
     
     # Configurar base de datos
     print_message "step" "Paso 6: Configurando base de datos"
@@ -73,7 +90,12 @@ main() {
     
     # Mostrar información y abrir la aplicación
     show_info
-    open_app
+    
+    # Preguntar antes de abrir la aplicación
+    read -p "¿Deseas abrir la aplicación en el navegador? (s/n): " open_browser
+    if [[ "$open_browser" =~ ^[Ss]$ ]]; then
+        open_app
+    fi
     
     # Ofrecer monitorización de logs
     print_message "info" "Chatree está listo para usar!"
