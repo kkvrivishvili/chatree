@@ -1,0 +1,12 @@
+fastapi==0.110.0
+uvicorn==0.27.0
+pydantic==2.6.0
+langchain>=0.0.350
+langchain-community>=0.0.10
+supabase>=2.4.0
+python-dotenv==1.0.0
+openai==1.10.0
+tiktoken==0.5.2
+redis==5.0.1
+langchain-redis>=0.0.1
+httpx>=0.26.0

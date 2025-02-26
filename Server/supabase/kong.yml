@@ -1,0 +1,57 @@
+_format_version: "2.1"
+_transform: true
+
+services:
+  - name: auth-v1-service
+    url: http://auth:9999/verify
+    routes:
+      - name: auth-v1-route
+        paths:
+          - /auth/v1
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - http://localhost:3000
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Accept-Language
+            - Content-Language
+            - Content-Type
+            - Authorization
+            - X-Client-Info
+            - X-Requested-With
+          credentials: true
+          max_age: 86400
+          preflight_continue: false
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - http://localhost:3000
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Accept
+        - Accept-Language
+        - Content-Language
+        - Content-Type
+        - Authorization
+        - X-Client-Info
+        - X-Requested-With
+      credentials: true
+      max_age: 86400
+      preflight_continue: false

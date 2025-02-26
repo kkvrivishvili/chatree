@@ -1,0 +1,89 @@
+# Reglas de Desarrollo (Windsurf Rules)
+
+1. **Leer y actualizar el README.MD con cada cambio y avance del proyecto**
+
+### Organización del Código
+
+1. **Estructura de Carpetas**
+   - Mantener separación clara entre frontend y backend
+   - Organizar código por funcionalidad, no por tipo de archivo
+   - Usar nombres descriptivos para archivos y carpetas
+   - **Centralizar la lógica en sus carpetas respectivas**:
+     - Todo lo relacionado a Supabase debe estar en `Server/supabase`
+     - Todo lo relacionado a LangChain debe estar en `Server/langchain`
+     - Todo lo relacionado al frontend debe estar en `app/src`
+
+2. **Convenciones de Nombrado**
+   - Frontend: camelCase para variables, PascalCase para componentes
+   - Backend: snake_case para variables y funciones, PascalCase para clases
+   - SQL: snake_case para tablas y columnas, mayúsculas para palabras clave
+
+3. **Documentación**
+   - Documentar todas las funciones y clases con docstrings
+   - Mantener README actualizado con cambios importantes
+   - Comentar código complejo o no intuitivo
+   - **Antes de crear nuevos archivos, analizar el código existente en esa ubicación**
+
+### Control de Versiones
+
+1. **Ramas**
+   - `main`: código estable y listo para producción
+   - `develop`: integración de características
+   - `feature/nombre`: desarrollo de nuevas características
+   - `fix/nombre`: corrección de errores
+
+2. **Commits**
+   - Usar mensajes descriptivos que expliquen el "qué" y el "por qué"
+   - Mantener commits pequeños y enfocados
+   - Referenciar números de issue cuando sea aplicable
+
+### Docker y Desarrollo
+
+1. **Optimización de Imágenes**
+   - Usar imágenes base ligeras (alpine cuando sea posible)
+   - Implementar multi-stage builds para reducir tamaño
+   - Minimizar capas y optimizar orden de comandos
+
+2. **Volúmenes y Persistencia**
+   - Usar volúmenes nombrados para datos persistentes
+   - Implementar estrategias de respaldo para volúmenes
+   - Documentar la estructura de volúmenes
+
+3. **Redes**
+   - Aislar servicios en redes dedicadas
+   - Exponer solo los puertos necesarios
+   - Usar nombres descriptivos para redes
+
+### Seguridad
+
+1. **Gestión de Secretos**
+   - Nunca incluir secretos en el código fuente
+   - Usar variables de entorno o servicios de gestión de secretos
+   - Rotar credenciales regularmente
+
+2. **Acceso a Datos**
+   - Implementar Row Level Security en Supabase
+   - Validar todas las entradas de usuario
+   - Aplicar principio de mínimo privilegio
+
+3. **API y Endpoints**
+   - Implementar autenticación para todos los endpoints sensibles
+   - Validar parámetros de entrada
+   - Implementar límites de tasa (rate limiting)
+
+### Rendimiento
+
+1. **Optimización de Base de Datos**
+   - Crear índices para consultas frecuentes
+   - Optimizar consultas vectoriales
+   - Monitorear y ajustar rendimiento
+
+2. **Caché con Redis**
+   - Cachear resultados de operaciones costosas
+   - Implementar estrategias de invalidación de caché
+   - Monitorear uso de memoria
+
+3. **Optimización de LLM**
+   - Ajustar parámetros de contexto y temperatura
+   - Implementar técnicas de compresión de prompt
+   - Cachear respuestas comunes
