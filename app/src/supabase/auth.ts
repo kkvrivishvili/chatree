@@ -11,8 +11,52 @@ interface AuthResponse<T = any> {
   error: AuthError | null;
 }
 
-// Cliente de Supabase para funciones de autenticación
-const supabase = createClient();
+// Creamos el cliente Supabase para autenticación, asegurándonos de que no sea nulo
+// Suponemos que auth.ts solo se usará en el cliente, donde window está definido
+const supabase = (() => {
+  // Verificamos si estamos en el cliente
+  const isClient = typeof window !== 'undefined';
+  
+  if (!isClient) {
+    console.warn('auth.ts se está cargando en el servidor, lo que no es ideal');
+    // Devolvemos un objeto que simula los métodos pero lanza errores si se llaman
+    return {
+      auth: {
+        signInWithPassword: () => {
+          throw new Error('auth.signInWithPassword() debe usarse solo en el cliente');
+        },
+        signUp: () => {
+          throw new Error('auth.signUp() debe usarse solo en el cliente');
+        },
+        signOut: () => {
+          throw new Error('auth.signOut() debe usarse solo en el cliente');
+        },
+        signInWithOAuth: () => {
+          throw new Error('auth.signInWithOAuth() debe usarse solo en el cliente');
+        },
+        getSession: () => {
+          throw new Error('auth.getSession() debe usarse solo en el cliente');
+        },
+        getUser: () => {
+          throw new Error('auth.getUser() debe usarse solo en el cliente');
+        },
+        resetPasswordForEmail: () => {
+          throw new Error('auth.resetPasswordForEmail() debe usarse solo en el cliente');
+        },
+        updateUser: () => {
+          throw new Error('auth.updateUser() debe usarse solo en el cliente');
+        }
+      }
+    };
+  }
+  
+  // En el cliente, creamos el cliente Supabase real
+  const client = createClient();
+  if (!client) {
+    throw new Error('No se pudo crear el cliente Supabase en el cliente');
+  }
+  return client;
+})();
 
 /**
  * Funciones de autenticación para uso en componentes del lado del cliente
@@ -22,14 +66,12 @@ export const auth = {
    * Inicia sesión con email y contraseña
    * @param email - Email del usuario
    * @param password - Contraseña del usuario
-   * @param redirectTo - URL opcional para redireccionar después de iniciar sesión
    */
-  signIn: async (email: string, password: string, redirectTo?: string): Promise<AuthResponse> => {
+  signIn: async (email: string, password: string): Promise<AuthResponse> => {
     try {
       const response = await supabase.auth.signInWithPassword({
         email,
         password
-        // La opción redirectTo no está disponible en signInWithPassword según la API actual
       });
       
       if (response.error) {

@@ -15,33 +15,33 @@ export function useAuth() {
   const [loading, setLoading] = useState(false)
   const { updateSession } = useSession()
   
-  /**
-   * Inicia sesión con email y contraseña
-   */
-  const signIn = async (email: string, password: string, redirectTo?: string) => {
-    try {
-      setLoading(true)
-      const { data, error } = await auth.signIn(email, password)
-      
-      if (error) {
-        throw error
-      }
-      
-      // Actualiza la sesión en el estado global
-      updateSession(data)
-      
-      if (redirectTo) {
-        router.push(redirectTo)
-      }
-      
-      return { data, error: null }
-    } catch (error: any) {
-      toast.error(error.message || 'Error al iniciar sesión')
-      return { data: null, error }
-    } finally {
-      setLoading(false)
+/**
+ * Inicia sesión con email y contraseña
+ */
+const signIn = async (email: string, password: string, redirectTo?: string) => {
+  try {
+    setLoading(true)
+    const { data, error } = await auth.signIn(email, password)
+    
+    if (error) {
+      throw error
     }
+    
+    // Actualiza la sesión en el estado global con la sesión correcta
+    updateSession(data.session)
+    
+    if (redirectTo) {
+      router.push(redirectTo)
+    }
+    
+    return { data, error: null }
+  } catch (error: any) {
+    toast.error(error.message || 'Error al iniciar sesión')
+    return { data: null, error }
+  } finally {
+    setLoading(false)
   }
+}
   
   /**
    * Registra un nuevo usuario
@@ -89,26 +89,31 @@ export function useAuth() {
     }
   }
   
-  /**
-   * Inicia sesión con un proveedor OAuth
-   */
-  const signInWithOAuth = async (provider: 'github' | 'google') => {
-    try {
-      setLoading(true)
-      const { data, error } = await auth.signInWithOAuth(provider)
-      
-      if (error) {
-        throw error
-      }
-      
-      return { data, error: null }
-    } catch (error: any) {
-      toast.error(error.message || `Error al iniciar sesión con ${provider}`)
-      return { data: null, error }
-    } finally {
-      setLoading(false)
+ /**
+ * Inicia sesión con un proveedor OAuth
+ * Nota: La redirección y actualización de sesión se manejan automáticamente
+ * a través de la ruta /auth/callback después de la autenticación exitosa
+ */
+const signInWithOAuth = async (provider: 'github' | 'google') => {
+  try {
+    setLoading(true)
+    const { data, error } = await auth.signInWithOAuth(provider)
+    
+    if (error) {
+      throw error
     }
+    
+    // No necesitamos actualizar la sesión aquí, ya que se hará en el callback
+    // No hay redirección manual ya que Supabase maneja la redirección a través de OAuth
+    
+    return { data, error: null }
+  } catch (error: any) {
+    toast.error(error.message || `Error al iniciar sesión con ${provider}`)
+    return { data: null, error }
+  } finally {
+    setLoading(false)
   }
+}
   
   /**
    * Envía un enlace de restablecimiento de contraseña
