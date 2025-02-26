@@ -1,29 +1,19 @@
 'use client'
 
-import { useSupabase } from './useSupabase'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { toast } from 'sonner' // Asumiendo que usas sonner para notificaciones
+import { toast } from 'sonner'
+import { auth } from '../auth'
+import { useSession } from './useSession'
 
 /**
  * Hook para manejar la autenticación de usuarios
  * Proporciona funciones para iniciar sesión, registrarse, cerrar sesión, etc.
- * @returns Funciones de autenticación y estados relacionados
- * 
- * @example
- * const { signIn, signUp, signOut, loading } = useAuth()
- * 
- * // Iniciar sesión
- * const handleSubmit = async (e) => {
- *   e.preventDefault()
- *   const { error } = await signIn(email, password)
- *   if (error) console.error(error)
- * }
  */
 export function useAuth() {
-  const supabase = useSupabase()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const { updateSession } = useSession()
   
   /**
    * Inicia sesión con email y contraseña
@@ -31,14 +21,14 @@ export function useAuth() {
   const signIn = async (email: string, password: string, redirectTo?: string) => {
     try {
       setLoading(true)
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
+      const { data, error } = await auth.signIn(email, password)
       
       if (error) {
         throw error
       }
+      
+      // Actualiza la sesión en el estado global
+      updateSession(data)
       
       if (redirectTo) {
         router.push(redirectTo)
@@ -59,14 +49,7 @@ export function useAuth() {
   const signUp = async (email: string, password: string, userData: Record<string, any> = {}) => {
     try {
       setLoading(true)
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: userData
-        }
-      })
+      const { data, error } = await auth.signUp(email, password, userData)
       
       if (error) {
         throw error
@@ -88,12 +71,14 @@ export function useAuth() {
   const signOut = async (redirectTo: string = '/') => {
     try {
       setLoading(true)
-      const { error } = await supabase.auth.signOut()
+      const { error } = await auth.signOut()
       
       if (error) {
         throw error
       }
       
+      // Actualiza la sesión a null en el estado global
+      updateSession(null)
       router.push(redirectTo)
       return { error: null }
     } catch (error: any) {
@@ -110,12 +95,7 @@ export function useAuth() {
   const signInWithOAuth = async (provider: 'github' | 'google') => {
     try {
       setLoading(true)
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      })
+      const { data, error } = await auth.signInWithOAuth(provider)
       
       if (error) {
         throw error
@@ -136,19 +116,17 @@ export function useAuth() {
   const resetPassword = async (email: string) => {
     try {
       setLoading(true)
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
-      })
+      const { error } = await auth.resetPassword(email)
       
       if (error) {
         throw error
       }
       
       toast.success('Se ha enviado un enlace para restablecer la contraseña a tu email')
-      return { data, error: null }
+      return { error: null }
     } catch (error: any) {
       toast.error(error.message || 'Error al enviar el enlace de restablecimiento')
-      return { data: null, error }
+      return { error }
     } finally {
       setLoading(false)
     }
@@ -160,9 +138,7 @@ export function useAuth() {
   const updatePassword = async (password: string) => {
     try {
       setLoading(true)
-      const { data, error } = await supabase.auth.updateUser({
-        password
-      })
+      const { data, error } = await auth.updatePassword(password)
       
       if (error) {
         throw error

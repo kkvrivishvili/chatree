@@ -35,6 +35,7 @@ export interface Database {
           website?: string | null
         }
       }
+      // Aquí se pueden añadir más tablas según se necesite
     }
     Views: {
       [_ in never]: never
@@ -46,4 +47,16 @@ export interface Database {
       [_ in never]: never
     }
   }
+}
+
+// Tipos de error genéricos para funciones de autenticación
+export interface AuthError {
+  message: string;
+  status?: number;
+}
+
+// Tipo para respuestas de funciones de autenticación
+export interface AuthResponse<T = any> {
+  data: T | null;
+  error: AuthError | null;
 }

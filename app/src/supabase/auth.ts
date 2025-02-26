@@ -1,17 +1,21 @@
-'use client'
+import { createClient } from './client';
 
-import React from 'react'
-import { createClient } from './client'
-import { redirect } from 'next/navigation'
-import type { Session } from '@supabase/supabase-js'
+// Definimos los tipos aquí para evitar problemas de importación
+interface AuthError {
+  message: string;
+  status?: number;
+}
+
+interface AuthResponse<T = any> {
+  data: T | null;
+  error: AuthError | null;
+}
+
+// Cliente de Supabase para funciones de autenticación
+const supabase = createClient();
 
 /**
- * Cliente de Supabase para usar en el archivo auth.ts
- */
-const supabase = createClient()
-
-/**
- * Funciones de autenticación para su uso en componentes del lado del cliente
+ * Funciones de autenticación para uso en componentes del lado del cliente
  */
 export const auth = {
   /**
@@ -20,14 +24,28 @@ export const auth = {
    * @param password - Contraseña del usuario
    * @param redirectTo - URL opcional para redireccionar después de iniciar sesión
    */
-  signIn: async (email: string, password: string, redirectTo?: string) => {
-    return supabase.auth.signInWithPassword({
-      email,
-      password,
-      options: redirectTo ? {
-        redirectTo: redirectTo
-      } : undefined
-    })
+  signIn: async (email: string, password: string, redirectTo?: string): Promise<AuthResponse> => {
+    try {
+      const response = await supabase.auth.signInWithPassword({
+        email,
+        password
+        // La opción redirectTo no está disponible en signInWithPassword según la API actual
+      });
+      
+      if (response.error) {
+        throw response.error;
+      }
+      
+      return { data: response.data, error: null };
+    } catch (error: any) {
+      return { 
+        data: null, 
+        error: { 
+          message: error.message || 'Error al iniciar sesión',
+          status: error.status
+        } 
+      };
+    }
   },
   
   /**
@@ -36,85 +54,181 @@ export const auth = {
    * @param password - Contraseña del usuario
    * @param userData - Datos adicionales del usuario (opcional)
    */
-  signUp: async (email: string, password: string, userData: Record<string, any> = {}) => {
-    return supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: userData
+  signUp: async (email: string, password: string, userData: Record<string, any> = {}): Promise<AuthResponse> => {
+    try {
+      const response = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`,
+          data: userData
+        }
+      });
+      
+      if (response.error) {
+        throw response.error;
       }
-    })
+      
+      return { data: response.data, error: null };
+    } catch (error: any) {
+      return { 
+        data: null, 
+        error: { 
+          message: error.message || 'Error al registrarse',
+          status: error.status
+        } 
+      };
+    }
   },
   
   /**
    * Cierra la sesión del usuario actual
    */
-  signOut: async () => {
-    return supabase.auth.signOut()
+  signOut: async (): Promise<AuthResponse> => {
+    try {
+      const response = await supabase.auth.signOut();
+      
+      if (response.error) {
+        throw response.error;
+      }
+      
+      return { data: null, error: null };
+    } catch (error: any) {
+      return { 
+        data: null, 
+        error: { 
+          message: error.message || 'Error al cerrar sesión',
+          status: error.status
+        } 
+      };
+    }
   },
   
   /**
    * Inicia sesión con un proveedor OAuth
    * @param provider - Proveedor OAuth ('github', 'google', etc.)
    */
-  oAuthSignIn: async (provider: 'github' | 'google') => {
-    return supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+  signInWithOAuth: async (provider: 'github' | 'google'): Promise<AuthResponse> => {
+    try {
+      const response = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`
+        }
+      });
+      
+      if (response.error) {
+        throw response.error;
       }
-    })
+      
+      return { data: response.data, error: null };
+    } catch (error: any) {
+      return { 
+        data: null, 
+        error: { 
+          message: error.message || `Error al iniciar sesión con ${provider}`,
+          status: error.status
+        } 
+      };
+    }
   },
-
+  
   /**
-   * Obtiene la sesión actual en el cliente
+   * Obtiene la sesión actual
    */
-  getSession: async () => {
-    const { data } = await supabase.auth.getSession()
-    return data.session
+  getSession: async (): Promise<AuthResponse> => {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        throw error;
+      }
+      
+      return { data: data.session, error: null };
+    } catch (error: any) {
+      return { 
+        data: null, 
+        error: { 
+          message: error.message || 'Error al obtener la sesión',
+          status: error.status
+        } 
+      };
+    }
   },
-
+  
   /**
-   * Obtiene el usuario actual en el cliente
+   * Obtiene el usuario actual
    */
-  getUser: async () => {
-    const { data } = await supabase.auth.getUser()
-    return data.user
+  getUser: async (): Promise<AuthResponse> => {
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        throw error;
+      }
+      
+      return { data: data.user, error: null };
+    } catch (error: any) {
+      return { 
+        data: null, 
+        error: { 
+          message: error.message || 'Error al obtener el usuario',
+          status: error.status
+        } 
+      };
+    }
+  },
+  
+  /**
+   * Envía un enlace para restablecer la contraseña
+   */
+  resetPassword: async (email: string): Promise<AuthResponse> => {
+    try {
+      const response = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/reset-password`
+      });
+      
+      if (response.error) {
+        throw response.error;
+      }
+      
+      return { data: null, error: null };
+    } catch (error: any) {
+      return { 
+        data: null, 
+        error: { 
+          message: error.message || 'Error al enviar el enlace de recuperación',
+          status: error.status
+        } 
+      };
+    }
+  },
+  
+  /**
+   * Actualiza la contraseña del usuario
+   */
+  updatePassword: async (password: string): Promise<AuthResponse> => {
+    try {
+      const response = await supabase.auth.updateUser({
+        password
+      });
+      
+      if (response.error) {
+        throw response.error;
+      }
+      
+      return { data: response.data, error: null };
+    } catch (error: any) {
+      return { 
+        data: null, 
+        error: { 
+          message: error.message || 'Error al actualizar la contraseña',
+          status: error.status
+        } 
+      };
+    }
   }
-}
+};
 
-/**
- * Hook para obtener la sesión actual de Supabase
- * @returns Objeto con la sesión y estado de carga
- */
-export const useSupabaseSession = () => {
-  const [session, setSession] = React.useState<Session | null>(null)
-  const [loading, setLoading] = React.useState(true)
-
-  React.useEffect(() => {
-    // Actualiza el estado inicial con la sesión actual
-    const initializeSession = async () => {
-      const { data } = await supabase.auth.getSession()
-      setSession(data.session)
-      setLoading(false)
-    }
-
-    initializeSession()
-
-    // Escucha cambios en la autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
-        setSession(newSession)
-        setLoading(false)
-      }
-    )
-
-    // Limpia la suscripción al desmontar el componente
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [])
-
-  return { session, loading }
-}
+// Re-exportamos los tipos para que estén disponibles al importar este módulo
+export type { AuthError, AuthResponse };

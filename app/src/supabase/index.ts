@@ -1,15 +1,17 @@
-// Exportaciones de clientes
-export * from './client';
-export * from './server';
+// Exportación de clientes
+export { createClient } from './client';
+export { createSupabaseServerClient, createSupabaseServerAdminClient, getSession, getUser } from './server';
 
-// Exportaciones de autenticación
-export * from './auth';
+// Exportación de autenticación
+export { auth } from './auth';
+export type { AuthResponse, AuthError } from './auth';
 
-// Exportaciones de hooks
-export * from './hooks';
+// Exportación de hooks
+export { useAuth } from './hooks/useAuth';
+export { useSession } from './hooks/useSession';
 
-// Exportaciones de utilidades
-export * from './route-handlers';
+// Exportación de utilidades para rutas
+export { requireAuth, withAuth, withRoles } from './route-handlers';
 
-// Exportaciones de tipos
-export * from './types';
+// Importamos directamente de los tipos de la aplicación
+export type { Database } from '@/types/supabase';
