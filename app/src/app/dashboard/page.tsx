@@ -7,6 +7,7 @@ export default async function Dashboard() {
 
   if (!session) {
     redirect('/signin');
+    return;
   }
 
   redirect('/dashboard/overview');
