@@ -26,6 +26,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+# Instalar pnpm en la etapa de producción
+RUN npm install -g pnpm
+
 # Copiar archivos necesarios
 COPY --from=builder /app/next.config.js ./
 COPY --from=builder /app/public ./public

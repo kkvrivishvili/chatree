@@ -25,6 +25,30 @@
     --destructive-foreground: 0 0% 100%;
     --ring: 20 100% 50%;
     --radius: 0.5rem;
+    
+    /* Variables para sidebar */
+    --sidebar-background: 20 35% 11%;
+    --sidebar-foreground: 20 10% 98%;
+    --sidebar-primary: 20 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 20 25% 25%;
+    --sidebar-accent-foreground: 20 10% 75%;
+    --sidebar-border: 20 25% 25%;
+    --sidebar-ring: 20 100% 50%;
+    
+    /* Variables para colores de gráficos */
+    --color-1: 214 80% 56%;
+    --color-2: 43 96% 56%;
+    --color-3: 316 70% 50%;
+    --color-4: 189 94% 43%;
+    --color-5: 151 65% 42%;
+    
+    /* Variables para gráficos */
+    --chart-1: 214 80% 56%;
+    --chart-2: 43 96% 56%;
+    --chart-3: 316 70% 50%;
+    --chart-4: 189 94% 43%;
+    --chart-5: 151 65% 42%;
   }
 
   .dark {
@@ -47,6 +71,16 @@
     --destructive: 0 85% 60%;
     --destructive-foreground: 0 0% 100%;
     --ring: 20 100% 50%;
+    
+    /* Variables para sidebar en modo oscuro */
+    --sidebar-background: 20 35% 11%;
+    --sidebar-foreground: 20 10% 98%;
+    --sidebar-primary: 20 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 20 25% 25%;
+    --sidebar-accent-foreground: 20 10% 75%;
+    --sidebar-border: 20 25% 25%;
+    --sidebar-ring: 20 100% 50%;
   }
 }
 

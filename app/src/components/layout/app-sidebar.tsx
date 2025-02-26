@@ -56,12 +56,17 @@ const company = {
 };
 
 export default function AppSidebar() {
-  const { session } = useAuth();
+  const auth = useAuth();
+  const session = auth?.session || null;
   const user = session?.user;
   const pathname = usePathname();
   const { state, isMobile } = useSidebar();
 
   const handleSignOut = async () => {
+    if (!supabase) {
+      console.error('Supabase client is undefined');
+      return;
+    }
     await supabase.auth.signOut();
     window.location.href = '/';
   };

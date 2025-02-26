@@ -1,6 +1,6 @@
-/** @type {import('next').NextConfig} */
 const path = require('path');
 const dotenv = require('dotenv');
+const withCritters = require('critters-webpack-plugin');
 
 // Cargar variables de entorno desde el archivo .env en la raíz del proyecto
 const rootEnvPath = path.resolve(process.cwd(), '../.env');
@@ -34,10 +34,11 @@ const nextConfig = {
     // Otras variables que necesite el frontend
   },
   
-  // Habilitar optimización CSS nativa
-  experimental: {
-    optimizeCss: true,
-  },
+ 
+  // webpack: (config) => {
+  //   config.plugins.push(new withCritters());
+  //   return config;
+  // },
 };
 
 module.exports = nextConfig;

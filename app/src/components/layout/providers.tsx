@@ -21,7 +21,7 @@ type SessionContextType = {
   supabase: SupabaseClient<Database>;
 };
 
-const SessionContext = createContext<SessionContextType>({} as SessionContextType);
+const SessionContext = createContext<SessionContextType | null>(null);
 
 export const SupabaseProvider = ({ 
   children, 
@@ -34,29 +34,37 @@ export const SupabaseProvider = ({
   const [session, setSession] = useState<UserSession | null>(initialSession || null);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event: string, session: Session | null) => {
-        if (session) {
-          setSession({
-            user: {
-              id: session.user.id,
-              email: session.user.email,
-              user_metadata: session.user.user_metadata
-            }
-          });
-        } else {
-          setSession(null);
+    if (!supabase) {
+      console.error('Supabase client is undefined');
+      return;
+    }
+    if (supabase && supabase.auth) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (_event: string, session: Session | null) => {
+          if (session) {
+            setSession({
+              user: {
+                id: session.user.id,
+                email: session.user.email,
+                user_metadata: session.user.user_metadata
+              }
+            });
+          } else {
+            setSession(null);
+          }
         }
-      }
-    );
+      );
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [supabase.auth]);
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [supabase]);
+
+  const sessionContextValue = supabase ? { session, supabase } : null;
 
   return (
-    <SessionContext.Provider value={{ session, supabase }}>
+    <SessionContext.Provider value={sessionContextValue}>
       {children}
     </SessionContext.Provider>
   );

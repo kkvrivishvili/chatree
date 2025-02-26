@@ -100,7 +100,7 @@ rebuild() {
     
     # Paso 6: Reconstruir todos los servicios
     print_message "step" "Paso 6: Reconstruyendo todos los servicios"
-    if ! docker compose build --no-cache; then
+    if ! DISABLE_ESLINT_PLUGIN=true docker compose build --no-cache; then
         print_message "error" "Error al reconstruir los servicios"
         exit 1
     fi

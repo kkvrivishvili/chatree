@@ -10,6 +10,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { GitHubLogoIcon } from '@radix-ui/react-icons';
 import { StarIcon } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner'; // Importación correcta en lugar de require
 
 export default function AuthTabs({ stars }: { stars: number }) {
   const searchParams = useSearchParams();
@@ -18,7 +19,6 @@ export default function AuthTabs({ stars }: { stars: number }) {
 
   useEffect(() => {
     if (showRegistrationSuccess) {
-      const toast = require('sonner').toast;
       toast.success('¡Gracias por registrarte! Por favor, inicia sesión.');
     }
   }, [showRegistrationSuccess]);

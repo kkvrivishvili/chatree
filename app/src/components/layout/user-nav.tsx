@@ -14,11 +14,13 @@ import {
 import { useAuth } from './providers';
 
 export function UserNav() {
-  const { session, supabase } = useAuth();
+  const auth = useAuth();
+  const session = auth?.session ?? null;
+  const supabase = auth?.supabase ?? null;
   const user = session?.user;
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await supabase?.auth.signOut();
     window.location.href = '/';
   };
 
