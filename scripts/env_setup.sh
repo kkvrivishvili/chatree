@@ -61,7 +61,6 @@ remove_duplicate_env_files() {
     
     # Directorios donde pueden existir archivos .env duplicados
     local subdirs=(
-        "$PROJECT_ROOT/app"
         "$PROJECT_ROOT/Server"
         "$PROJECT_ROOT/Server/supabase"
         "$PROJECT_ROOT/Server/langchain"
@@ -216,12 +215,10 @@ EOL
     # Verificar problemas comunes de configuración
     check_env_config_issues
     
-    # Crear enlaces simbólicos para Next.js si es necesario
-    print_message "info" "Configurando acceso a variables de entorno para Next.js..."
-    if [ ! -f "$PROJECT_ROOT/app/.env" ]; then
-        ln -sf "$PROJECT_ROOT/.env" "$PROJECT_ROOT/app/.env"
-        print_message "success" "Enlace simbólico creado para Next.js"
-    fi
+    # Informar sobre el acceso a variables de entorno para Next.js
+    print_message "info" "Next.js necesita acceso a las variables de entorno"
+    print_message "info" "Las variables de entorno para Next.js deben configurarse manualmente en el archivo .env.local"
+    print_message "info" "O configurarse en el archivo docker-compose.yml en la sección 'environment' del servicio 'app'"
     
     return 0
 }

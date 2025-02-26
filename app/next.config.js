@@ -33,6 +33,11 @@ const nextConfig = {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     // Otras variables que necesite el frontend
   },
+  
+  // Habilitar optimización CSS nativa
+  experimental: {
+    optimizeCss: true,
+  },
 };
 
 module.exports = nextConfig;

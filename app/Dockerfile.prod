@@ -16,9 +16,6 @@ RUN pnpm i
 # Copiar código fuente
 COPY . .
 
-# Copiar el archivo .env si existe (será reemplazado en runtime)
-COPY ../.env ./.env.build || true
-
 # Construir aplicación
 RUN pnpm run build
 

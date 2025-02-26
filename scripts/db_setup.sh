@@ -30,7 +30,14 @@ setup_database() {
             return 1
         fi
         
-        docker exec -i $supabase_container psql -U postgres -d postgres < "$migration_file"
+        # Usar el contenedor de postgres directamente en lugar del contenedor de supabase
+        local postgres_container=$(docker ps -qf "name=supabase-db" | head -n1)
+        if [ -z "$postgres_container" ]; then
+            print_message "error" "No se pudo encontrar el contenedor de PostgreSQL"
+            return 1
+        fi
+        
+        cat "$migration_file" | docker exec -i $postgres_container psql -U postgres -d postgres
         
         if [ $? -ne 0 ]; then
             print_message "error" "Error al aplicar migración inicial"
@@ -41,10 +48,10 @@ setup_database() {
     fi
     
     # Verificar extensión pgvector
-    if ! docker exec $supabase_container psql -U postgres -d postgres -c "SELECT * FROM pg_extension WHERE extname = 'vector'" | grep -q "vector"; then
+    if ! docker exec $postgres_container psql -U postgres -d postgres -c "SELECT * FROM pg_extension WHERE extname = 'vector'" | grep -q "vector"; then
         print_message "info" "Habilitando extensión pgvector..."
         
-        docker exec $supabase_container psql -U postgres -d postgres -c "CREATE EXTENSION IF NOT EXISTS vector;"
+        docker exec $postgres_container psql -U postgres -d postgres -c "CREATE EXTENSION IF NOT EXISTS vector;"
         
         if [ $? -ne 0 ]; then
             print_message "error" "Error al habilitar pgvector"

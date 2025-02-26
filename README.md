@@ -37,6 +37,45 @@ El proyecto utiliza las siguientes tecnologías:
 
 > **IMPORTANTE**: Antes de crear nuevos archivos, analiza el código existente en la ubicación correspondiente para mantener la coherencia y evitar duplicaciones. Toda la lógica debe estar centralizada en sus carpetas respectivas.
 
+### Gestión de Dependencias
+
+- **Gestor de Paquetes**: El proyecto utiliza **pnpm** como gestor de paquetes.
+  - ⚠️ **IMPORTANTE**: No usar npm o yarn para instalar dependencias, ya que puede causar inconsistencias.
+  - Comandos comunes:
+    ```bash
+    # Instalar dependencias
+    pnpm install
+    
+    # Agregar una nueva dependencia
+    pnpm add [paquete]
+    
+    # Agregar una dependencia de desarrollo
+    pnpm add -D [paquete]
+    
+    # Ejecutar scripts
+    pnpm [script]
+    ```
+
+- **Tailwind CSS**: El proyecto utiliza Tailwind CSS para los estilos.
+  - ⚠️ **IMPORTANTE**: Seguir la configuración correcta detallada en la [sección de configuración de Tailwind CSS](#configuración-de-tailwind-css).
+  - No modificar el orden de los plugins en postcss.config.js
+
+## Reglas y Convenciones
+
+### Frontend
+
+1. **Tailwind CSS**:
+   - Asegurarse de que `postcss.config.js` incluya los plugins necesarios para Tailwind
+   - No duplicar directivas `@layer` en `globals.css`
+   - Mantener la estructura de temas en un solo lugar
+   - Si hay problemas con las directivas de Tailwind, verificar:
+     - Que `tailwindcss/nesting` esté configurado en `postcss.config.js`
+     - Que `tailwind.config.js` incluya todas las rutas de archivos necesarias
+
+2. **Next.js**:
+   - Utilizar la estructura de carpetas de App Router
+   - Seguir las convenciones de nomenclatura de archivos de Next.js
+
 ## Configuración del Entorno
 
 Chatree utiliza un sistema centralizado de variables de entorno para simplificar la configuración y garantizar la coherencia en todo el proyecto:
@@ -236,12 +275,34 @@ cd chatree
 cp .env.example .env
 # Editar .env con tus credenciales
 
-# Iniciar servicios
-docker-compose up -d
+# Iniciar servicios (primera vez o actualización normal)
+./start.sh
+
+# Para reconstruir completamente (eliminar contenedores, imágenes y caché)
+./rebuild.sh
 
 # Ver logs
-docker-compose logs -f
+docker compose logs -f
 ```
+
+## Actualización del proyecto
+
+Cuando se realizan cambios importantes en el código o las dependencias (como Tailwind CSS), es recomendable reconstruir completamente el proyecto:
+
+```bash
+# Detener todos los contenedores, eliminar imágenes y reconstruir desde cero
+./rebuild.sh
+```
+
+Este script realiza las siguientes acciones:
+1. Detiene todos los contenedores en ejecución
+2. Elimina volúmenes asociados al proyecto
+3. Elimina imágenes Docker relacionadas con Chatree
+4. Limpia la caché de Docker
+5. Reconstruye todos los servicios con `--no-cache`
+6. Inicia los servicios con `--force-recreate`
+
+Esto garantiza que todos los cambios en el código, configuraciones y dependencias se apliquen correctamente.
 
 ## Acceso a servicios
 
@@ -281,6 +342,144 @@ Si experimentas problemas de CORS al intentar acceder desde el frontend al backe
    ```bash
    cd Server/supabase && docker compose restart
    ```
+
+## Configuración de Tailwind CSS
+
+El proyecto utiliza Tailwind CSS con la siguiente configuración:
+
+### Archivos de configuración
+
+1. **postcss.config.js**: Configuración simplificada con plugins en orden óptimo:
+   ```javascript
+   module.exports = {
+     plugins: {
+       'postcss-import': {},
+       'tailwindcss/nesting': 'postcss-nesting', // Configuración simplificada
+       tailwindcss: {},
+       autoprefixer: {},
+     }
+   };
+   ```
+
+2. **tailwind.config.js**: Contiene la configuración de temas y rutas de contenido:
+   ```javascript
+   module.exports = {
+     darkMode: ['class'],
+     content: [
+       './pages/**/*.{ts,tsx}',
+       './components/**/*.{ts,tsx}',
+       './constants/**/*.{ts,tsx}',
+       './app/**/*.{ts,tsx}',
+       './src/**/*.{ts,tsx}',
+       './sections/**/*.{ts,tsx}'
+     ],
+     // ...resto de la configuración
+   };
+   ```
+
+3. **globals.css**: Estructura correcta del archivo:
+   ```css
+   @tailwind base;
+   @tailwind components;
+   @tailwind utilities;
+
+   @layer base {
+     :root {
+       /* Variables del tema */
+     }
+     
+     .dark {
+       /* Variables del tema para modo oscuro */
+     }
+   }
+
+   /* Otras capas y utilidades personalizadas */
+   @layer utilities {
+     /* Utilidades personalizadas */
+   }
+   ```
+
+### Implementación en Next.js 14
+
+El proyecto utiliza la implementación nativa de CSS de Next.js 14 con las siguientes características:
+
+1. **Configuración simplificada**: 
+   - Sin configuración personalizada de webpack para CSS
+   - Optimización CSS habilitada via Turbopack
+   ```javascript
+   // next.config.js
+   experimental: { 
+     optimizeCss: true 
+   }
+   ```
+
+2. **Versiones requeridas**:
+   ```json
+   "tailwindcss": "^4.0.9",
+   "postcss": "^8.4.38",
+   "postcss-nesting": "^13.0.1"
+   ```
+
+### Solución de problemas comunes
+
+- Si aparecen errores de "Unknown at rule @tailwind", verificar que postcss-nesting esté correctamente configurado
+- No duplicar directivas @layer en globals.css
+- Asegurarse de que todas las rutas estén incluidas en content[] en tailwind.config.js
+- Después de cambios en la configuración, ejecutar:
+  ```bash
+  # Limpiar caché de Next.js
+  pnpm dev --clean
+  
+  # O reconstruir contenedores completamente
+  docker compose down -v && docker compose up --build --force-recreate
+  ```
+
+### Configuración de VSCode para Tailwind
+
+Para una mejor experiencia de desarrollo, configurar VSCode con:
+
+```json
+{
+  "css.validate": false,
+  "less.validate": false,
+  "scss.validate": false,
+  "tailwindCSS.emmetCompletions": true,
+  "css.lint.unknownAtRules": "ignore"
+}
+```
+
+## Gestión de Variables de Entorno
+
+El proyecto utiliza un sistema centralizado de variables de entorno con las siguientes características:
+
+1. Todas las variables se definen en un único archivo `.env` en la raíz del proyecto
+2. Se eliminan archivos `.env` duplicados en subdirectorios
+3. Se utiliza un enlace simbólico para que Next.js acceda a las variables
+4. El archivo `docker-compose.yml` está configurado para cargar variables desde el archivo centralizado
+5. Se ha implementado una verificación automática para detectar problemas comunes de configuración
+
+### Variables de Supabase
+
+Para las variables de Supabase, es crucial mantener la consistencia:
+- `SUPABASE_ANON_KEY` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` deben tener exactamente el mismo valor
+- `SUPABASE_URL` (http://supabase:8000) es para acceso interno desde Docker
+- `NEXT_PUBLIC_SUPABASE_URL` (http://localhost:54321) es para acceso desde el navegador
+
+### Ejemplo de archivo `.env`
+
+```bash
+# Supabase Configuration
+SUPABASE_ANON_KEY=eyJhbGci...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
+POSTGRES_PASSWORD=postgres
+
+# URLs de Supabase (internas y externas)
+SUPABASE_URL=http://supabase:8000
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+
+# Claves de API de Supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...  # Debe ser igual a SUPABASE_ANON_KEY
+```
 
 ## Reglas de Desarrollo (Windsurf Rules)
 

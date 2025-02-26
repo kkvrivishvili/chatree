@@ -23,8 +23,12 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copiar package.json
+# Instalar pnpm
+RUN npm install -g pnpm
+
+# Copiar package.json y pnpm-lock.yaml
 COPY package*.json ./
+COPY pnpm-lock.yaml* ./
 
 # Instalar dependencias
 RUN pnpm i

@@ -30,11 +30,23 @@ source "$SCRIPTS_DIR/db_setup.sh"
 source "$SCRIPTS_DIR/models_setup.sh"
 source "$SCRIPTS_DIR/setup_modules.sh"
 
+# Banner de inicio
+print_banner
+
+# Preguntar si se quiere hacer un rebuild completo
+echo -e "${YELLOW}¿Deseas realizar una reconstrucción completa del proyecto?${NC}"
+echo -e "Esto eliminará todos los contenedores, imágenes y caché de Docker relacionados con Chatree."
+echo -e "Recomendado cuando se actualizan dependencias o se hacen cambios importantes en el código."
+read -p "Reconstruir completamente (s/n): " do_rebuild
+
+if [[ "$do_rebuild" =~ ^[Ss]$ ]]; then
+    print_message "info" "Iniciando reconstrucción completa..."
+    "$PROJECT_ROOT/rebuild.sh"
+    exit $?
+fi
+
 # Función principal
 main() {
-    # Banner de inicio
-    print_banner
-    
     # Verificar si se está ejecutando como root
     check_root
     
@@ -107,3 +119,7 @@ main() {
 
 # Ejecutar función principal
 main "$@"
+
+# Agregar mensaje informativo sobre la reconstrucción
+echo -e "\n${YELLOW}Nota:${NC} Si necesitas reconstruir completamente el proyecto (borrar imágenes y contenedores),"
+echo -e "utiliza el script ${GREEN}./rebuild.sh${NC} para crear todo desde cero."
