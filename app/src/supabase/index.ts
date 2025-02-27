@@ -2,9 +2,12 @@
 export { getSupabaseBrowserClient } from './client';
 export { createSupabaseServerClient, getSession, getUser } from './server';
 
-// Exportación de autenticación
 export { auth } from './auth';
-export type { AuthResponse, AuthError } from './auth';
+export type { 
+  AuthError, 
+  AuthResponse, 
+  AuthData 
+} from './auth';
 
 // Exportación de hooks
 export { useAuth } from './hooks/useAuth';
