@@ -8,11 +8,13 @@ import { createClient } from './client'
 type SupabaseContextType = {
   session: Session | null
   isLoading: boolean
+  error: Error | null
 }
 
 const SupabaseContext = createContext<SupabaseContextType>({
   session: null,
-  isLoading: true
+  isLoading: true,
+  error: null
 })
 
 export function SupabaseProvider({ 
@@ -24,17 +26,31 @@ export function SupabaseProvider({
 }) {
   const [session, setSession] = useState<Session | null>(initialSession || null)
   const [isLoading, setIsLoading] = useState(!initialSession)
+  const [error, setError] = useState<Error | null>(null)
   
   useEffect(() => {
     const supabase = createClient()
-    if (!supabase) return
+    if (!supabase) {
+      setError(new Error('No se pudo crear el cliente de Supabase'))
+      setIsLoading(false)
+      return
+    }
     
     // Si no tenemos una sesión inicial, intentamos obtenerla
-    if (!initialSession) {
-      supabase.auth.getSession().then(({ data }) => {
+    const fetchSession = async () => {
+      try {
+        setIsLoading(true)
+        const { data } = await supabase.auth.getSession()
         setSession(data.session)
+      } catch (fetchError) {
+        setError(fetchError as Error)
+      } finally {
         setIsLoading(false)
-      })
+      }
+    }
+
+    if (!initialSession) {
+      fetchSession()
     }
     
     // Suscribirnos a cambios en la autenticación
@@ -51,7 +67,7 @@ export function SupabaseProvider({
   }, [initialSession])
   
   return (
-    <SupabaseContext.Provider value={{ session, isLoading }}>
+    <SupabaseContext.Provider value={{ session, isLoading, error }}>
       {children}
     </SupabaseContext.Provider>
   )

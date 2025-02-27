@@ -14,10 +14,17 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // Validación de variables de entorno
+  if (!url || !anonKey) {
+    console.error('Configuración de Supabase incompleta');
+    return response;
+  }
+
+  try {
+    const supabase = createServerClient(url, anonKey, {
       cookies: {
         get(name: string) {
           return request.cookies.get(name)?.value;
@@ -37,11 +44,13 @@ export async function updateSession(request: NextRequest) {
           });
         },
       },
-    }
-  );
+    });
 
-  // Renovar la sesión si está expirada
-  await supabase.auth.getUser();
+    // Renovar la sesión si está expirada
+    await supabase.auth.getUser();
+  } catch (error) {
+    console.error('Error en la actualización de sesión del middleware:', error);
+  }
 
   return response;
 }

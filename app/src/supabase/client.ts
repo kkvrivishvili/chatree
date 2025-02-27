@@ -3,7 +3,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '@/types/supabase';
 
 // Almacenamos el cliente como un singleton
-let browserClient: ReturnType<typeof createBrowserClient<Database>> | undefined;
+let browserClient: ReturnType<typeof createBrowserClient<Database>> | null = null;
 
 /**
  * Crea un cliente Supabase para usar en el navegador (componentes del lado del cliente)
@@ -11,24 +11,40 @@ let browserClient: ReturnType<typeof createBrowserClient<Database>> | undefined;
  * @returns Cliente de Supabase con tipado completo
  */
 export const createClient = () => {
-  // Si estamos en el servidor, mostramos una advertencia y devolvemos undefined
+  // Si estamos en el servidor, mostramos una advertencia y devolvemos null
   if (typeof window === 'undefined') {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('createClient fue llamado en el servidor. Este cliente solo debe usarse en componentes del cliente.');
-    }
-    return undefined;
+    console.warn('createClient solo debe usarse en componentes del cliente');
+    return null;
+  }
+  
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // Registro detallado para depuración
+  console.log('🔍 URL de Supabase:', url);
+  console.log('🔑 Clave Anónima presente:', !!anonKey);
+
+  // Validación explícita de las variables de entorno
+  if (!url) {
+    console.error('🚨 La URL de Supabase es requerida. Verifica tus variables de entorno.');
+    return null;
+  }
+
+  if (!anonKey) {
+    console.error('🚨 La Clave Anónima de Supabase es requerida. Verifica tus variables de entorno.');
+    return null;
   }
   
   // Singleton para evitar múltiples instancias
   if (!browserClient) {
-    browserClient = createBrowserClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    try {
+      browserClient = createBrowserClient<Database>(url, anonKey);
+      console.log('✅ Cliente Supabase creado exitosamente');
+    } catch (error) {
+      console.error('🚨 Error al crear el cliente de Supabase:', error);
+      return null;
+    }
   }
 
-  console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-console.log('Supabase Anon Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-  
   return browserClient;
 };

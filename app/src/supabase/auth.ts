@@ -52,9 +52,13 @@ const supabase = (() => {
   
   // En el cliente, creamos el cliente Supabase real
   const client = createClient();
+  
+  // Si no se puede crear el cliente, lanzamos un error más descriptivo
   if (!client) {
-    throw new Error('No se pudo crear el cliente Supabase en el cliente');
+    console.error('No se pudo crear el cliente Supabase. Verifica las variables de entorno.');
+    throw new Error('No se pudo crear el cliente Supabase. Revisa NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY');
   }
+  
   return client;
 })();
 

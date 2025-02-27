@@ -12,49 +12,40 @@ import type { Database } from '@/types/supabase';
 export const createSupabaseServerClient = async () => {
   const cookieStore = cookies();
 
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: any) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options: any) {
-          cookieStore.delete({ name, ...options });
-        },
-      },
-    }
-  );
-};
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-/**
- * Cliente de Supabase con la clave de rol de servicio para operaciones administrativas
- * SOLO DEBE USARSE EN SERVER COMPONENTS O API ROUTES
- */
-export const createSupabaseServerAdminClient = async () => {
-  const cookieStore = cookies();
+  if (!url) {
+    console.error('🚨 URL de Supabase no configurada para el servidor');
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL no está definida');
+  }
 
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: any) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options: any) {
-          cookieStore.delete({ name, ...options });
-        },
+  if (!anonKey) {
+    console.error('🚨 Clave Anónima de Supabase no configurada para el servidor');
+    throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY no está definida');
+  }
+
+  return createServerClient<Database>(url, anonKey, {
+    cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value;
       },
-    }
-  );
+      set(name: string, value: string, options: any) {
+        try {
+          cookieStore.set({ name, value, ...options });
+        } catch (error) {
+          console.error('Error al establecer cookie:', error);
+        }
+      },
+      remove(name: string, options: any) {
+        try {
+          cookieStore.delete({ name, ...options });
+        } catch (error) {
+          console.error('Error al eliminar cookie:', error);
+        }
+      },
+    },
+  });
 };
 
 /**
@@ -62,9 +53,14 @@ export const createSupabaseServerAdminClient = async () => {
  * @returns La sesión actual o null si no hay sesión
  */
 export async function getSession() {
-  const supabase = await createSupabaseServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  return session;
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    return session;
+  } catch (error) {
+    console.error('Error al obtener la sesión:', error);
+    return null;
+  }
 }
 
 /**
@@ -72,6 +68,11 @@ export async function getSession() {
  * @returns El usuario actual o null si no hay usuario autenticado
  */
 export async function getUser() {
-  const session = await getSession();
-  return session?.user || null;
+  try {
+    const session = await getSession();
+    return session?.user || null;
+  } catch (error) {
+    console.error('Error al obtener el usuario:', error);
+    return null;
+  }
 }
