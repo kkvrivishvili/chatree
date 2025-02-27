@@ -1,6 +1,6 @@
 'use client'
 
-import { createClient } from '../client'
+import { createSupabaseClient } from '../client'
 import { useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../types'
@@ -16,6 +16,6 @@ import type { Database } from '../types'
  */
 export function useSupabase() {
   // useState con función inicializadora para que solo se cree una vez
-  const [supabase] = useState<SupabaseClient<Database>>(() => createClient()!)
+  const [supabase] = useState<SupabaseClient<Database>>(() => createSupabaseClient()!)
   return supabase
 }

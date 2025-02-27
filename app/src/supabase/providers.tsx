@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { Session } from '@supabase/supabase-js'
-import { createClient } from './client'
+import { createSupabaseClient } from './client'
 
 // Contexto para proveer la sesión a toda la aplicación
 type SupabaseContextType = {
@@ -29,7 +29,7 @@ export function SupabaseProvider({
   const [error, setError] = useState<Error | null>(null)
   
   useEffect(() => {
-    const supabase = createClient()
+    const supabase = createSupabaseClient()
     if (!supabase) {
       setError(new Error('No se pudo crear el cliente de Supabase'))
       setIsLoading(false)
