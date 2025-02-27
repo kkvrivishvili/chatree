@@ -1,7 +1,7 @@
 'use client';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import ThemeProvider from './ThemeToggle/theme-provider';
-import { createClient } from '@/supabase/client';
+import { createSupabaseClient } from '@/supabase/client';
 import type { Database } from '@/supabase/types';
 import { Session, SupabaseClient } from '@supabase/supabase-js';
 
@@ -30,7 +30,8 @@ export const SupabaseProvider = ({
   children: React.ReactNode;
   initialSession?: UserSession | null;
 }) => {
-  const supabase = createClient();
+  // Corrección: Llamada correcta al método createSupabaseClient
+  const supabase = createSupabaseClient();
   const [session, setSession] = useState<UserSession | null>(initialSession || null);
 
   useEffect(() => {
@@ -38,15 +39,17 @@ export const SupabaseProvider = ({
       console.error('Supabase client is undefined');
       return;
     }
+
+    // Verificación adicional de supabase.auth
     if (supabase && supabase.auth) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (_event: string, session: Session | null) => {
-          if (session) {
+        (_event: string, authSession: Session | null) => {
+          if (authSession) {
             setSession({
               user: {
-                id: session.user.id,
-                email: session.user.email,
-                user_metadata: session.user.user_metadata
+                id: authSession.user.id,
+                email: authSession.user.email,
+                user_metadata: authSession.user.user_metadata
               }
             });
           } else {
@@ -61,17 +64,33 @@ export const SupabaseProvider = ({
     }
   }, [supabase]);
 
-  const sessionContextValue = supabase ? { session, supabase } : null;
+  // Asegurar que sessionContextValue sea del tipo correcto
+  const sessionContextValue = supabase 
+    ? { session, supabase } 
+    : null;
 
   return (
     <SessionContext.Provider value={sessionContextValue}>
-      {children}
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        {children}
+      </ThemeProvider>
     </SessionContext.Provider>
   );
 };
 
 export const useAuth = () => {
-  return useContext(SessionContext);
+  const context = useContext(SessionContext);
+  
+  if (context === null) {
+    throw new Error('useAuth must be used within a SupabaseProvider');
+  }
+  
+  return context;
 };
 
 export default function Providers({ 
@@ -82,15 +101,8 @@ export default function Providers({
   session?: UserSession | null;
 }) {
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
-      <SupabaseProvider initialSession={initialSession}>
-        {children}
-      </SupabaseProvider>
-    </ThemeProvider>
+    <SupabaseProvider initialSession={initialSession}>
+      {children}
+    </SupabaseProvider>
   );
 }

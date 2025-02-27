@@ -25,6 +25,11 @@ const formSchema = z.object({
 
 type UserFormValue = z.infer<typeof formSchema>;
 
+interface AuthError {
+  message: string;
+  status?: number;
+}
+
 export default function UserAuthForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl');
@@ -41,15 +46,16 @@ export default function UserAuthForm() {
 
   const onSubmit = async (data: UserFormValue) => {
     startTransition(async () => {
-      const { error } = await signIn(
-        data.email, 
-        data.password,
-        callbackUrl || '/dashboard/overview'
-      );
-      
-      if (error) {
-        // Asegurarse de que error tenga un tipo adecuado
-        const errorMessage = (error as Error).message || 'Error al iniciar sesión';
+      const response = await signIn(data.email, data.password, callbackUrl || '/dashboard/overview');
+
+      if (!response) {
+        toast.error('Error desconocido al iniciar sesión');
+        return;
+      }
+
+      if ('error' in response) {
+        const error = response.error as AuthError;
+        const errorMessage = error.message || 'Error al iniciar sesión';
         toast.error(errorMessage);
       } else {
         toast.success('Inicio de sesión exitoso!');

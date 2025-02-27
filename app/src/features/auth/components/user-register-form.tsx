@@ -29,6 +29,11 @@ const formSchema = z.object({
 
 type UserFormValue = z.infer<typeof formSchema>;
 
+interface AuthError {
+  message: string;
+  status?: number;
+}
+
 export default function UserRegisterForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl');
@@ -46,18 +51,28 @@ export default function UserRegisterForm() {
 
   const onSubmit = async (data: UserFormValue) => {
     startTransition(async () => {
-      const userData = {
-        full_name: data.email.split('@')[0],
-      };
-      
-      const { error } = await signUp(data.email, data.password, userData);
-      
-      if (error) {
-        toast.error(error.message);
-      } else {
-        // Usar window.location para asegurar un refresco completo
-        window.location.href = '/?registered=true';
-      }
+        const userData = {
+            full_name: data.email.split('@')[0],
+        };
+
+        const response = await signUp(data.email, data.password, userData);
+
+        if (!response) {
+            toast.error('Error desconocido al registrarse');
+            return;
+        }
+
+        if ('error' in response) {
+            const error = response.error;
+            if (typeof error === 'object' && error !== null && 'message' in error) {
+                const errorMessage = typeof error.message === 'string' ? error.message : 'Error desconocido';
+                toast.error(errorMessage);
+            } else {
+                toast.error('Error desconocido');
+            }
+        } else {
+            window.location.href = '/?registered=true';
+        }
     });
   };
 
