@@ -1,34 +1,49 @@
-import KBar from '@/components/kbar';
-import AppSidebar from '@/components/layout/app-sidebar';
-import Header from '@/components/layout/header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
+"use client";
 
-export const metadata: Metadata = {
-  title: 'Next Shadcn Dashboard Starter',
-  description: 'Basic dashboard with Next.js and Shadcn'
-};
+import React, { ReactNode } from "react";
 
-export default async function DashboardLayout({
-  children
-}: {
-  children: React.ReactNode;
-}) {
-  // Persisting the sidebar state in the cookie.
-  const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get('sidebar:state')?.value === 'true';
+import { AppSidebar } from "@/app/dashboard/components/sidebar/app-sidebar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+
+interface LayoutProps {
+  readonly children: ReactNode;
+}
+
+export default function Layout({ children }: LayoutProps) {
   return (
-    <KBar>
-      <SidebarProvider defaultOpen={defaultOpen}>
+    <main>
+      <SidebarProvider>
         <AppSidebar />
-        <SidebarInset>
-          <Header />
-          {/* page main content */}
-          {children}
-          {/* page main content ends */}
+        <SidebarInset className="mx-auto max-w-screen-2xl">
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  {/* <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                  </BreadcrumbItem> */}
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          </header>
+          <div className="p-4 pt-0">{children}</div>
         </SidebarInset>
       </SidebarProvider>
-    </KBar>
+    </main>
   );
 }
