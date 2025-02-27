@@ -45,9 +45,9 @@ import { usePathname } from 'next/navigation';
 import * as React from 'react';
 import { Icons } from '../icons';
 import { useAuth } from './providers';
-import { createClient } from '@/supabase/client';
+import { createSupabaseClient } from '@/supabase/client';
 
-const supabase = createClient();
+const supabase = createSupabaseClient();
 
 const company = {
   name: 'Acme Inc',
