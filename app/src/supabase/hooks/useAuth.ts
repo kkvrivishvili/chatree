@@ -20,26 +20,26 @@ export function useAuth() {
  */
 const signIn = async (email: string, password: string, redirectTo?: string) => {
   try {
-    setLoading(true)
-    const { data, error } = await auth.signIn(email, password)
+    setLoading(true);
+    const { data, error } = await auth.signIn(email, password);
     
     if (error) {
-      throw error
+      throw error;
     }
     
     // Actualiza la sesión en el estado global con la sesión correcta
-    updateSession(data.session)
+    updateSession(data.session);
     
     if (redirectTo) {
-      router.push(redirectTo)
+      router.push(redirectTo);
     }
     
-    return { data, error: null }
-  } catch (error: any) {
-    toast.error(error.message || 'Error al iniciar sesión')
-    return { data: null, error }
+    return { data: data as { user: any; session: any; }, error: null };
+  } catch (error: unknown) {
+    toast.error((error as any).message || 'Error al iniciar sesión');
+    return { data: null, error };
   } finally {
-    setLoading(false)
+    setLoading(false);
   }
 }
   

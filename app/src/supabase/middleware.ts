@@ -1,25 +1,18 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-/**
- * Actualiza la sesión de Supabase en cada solicitud HTTP
- * Maneja las cookies necesarias para la autenticación
- * @param request - La solicitud entrante
- * @returns Respuesta con cookies actualizadas
- */
 export async function updateSession(request: NextRequest) {
+  // Preparar respuesta base
   let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+    request: { headers: request.headers },
   });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Validación de variables de entorno
+  // Validación estricta de variables
   if (!url || !anonKey) {
-    console.error('Configuración de Supabase incompleta');
+    console.error('⚠️ Configuración de Supabase incompleta');
     return response;
   }
 
@@ -30,9 +23,12 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.get(name)?.value;
         },
         set(name: string, value: string, options: any) {
+          // Asegurar que solo se establecen cookies seguras
           response.cookies.set({
             name,
             value,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
             ...options,
           });
         },
@@ -40,16 +36,28 @@ export async function updateSession(request: NextRequest) {
           response.cookies.set({
             name,
             value: '',
+            expires: new Date(0),
             ...options,
           });
         },
       },
     });
 
-    // Renovar la sesión si está expirada
-    await supabase.auth.getUser();
+    // Renovar sesión de manera segura
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // Log solo en desarrollo
+    if (process.env.NODE_ENV === 'development' && user) {
+      console.info('✅ Sesión de usuario renovada');
+    }
+
   } catch (error) {
-    console.error('Error en la actualización de sesión del middleware:', error);
+    // Manejo de errores más robusto
+    console.error('❌ Error en middleware de sesión:', error);
+    
+    // Opcionalmente, podrías invalidar la sesión en caso de error
+    response.cookies.delete('sb-access-token');
+    response.cookies.delete('sb-refresh-token');
   }
 
   return response;

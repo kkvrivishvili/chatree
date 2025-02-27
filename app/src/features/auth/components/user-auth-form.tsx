@@ -43,12 +43,14 @@ export default function UserAuthForm() {
     startTransition(async () => {
       const { error } = await signIn(
         data.email, 
-        data.password, 
+        data.password,
         callbackUrl || '/dashboard/overview'
       );
       
       if (error) {
-        toast.error(error.message);
+        // Asegurarse de que error tenga un tipo adecuado
+        const errorMessage = (error as Error).message || 'Error al iniciar sesión';
+        toast.error(errorMessage);
       } else {
         toast.success('Inicio de sesión exitoso!');
       }

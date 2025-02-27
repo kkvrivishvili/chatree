@@ -2,49 +2,42 @@
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '@/types/supabase';
 
-// Almacenamos el cliente como un singleton
-let browserClient: ReturnType<typeof createBrowserClient<Database>> | null = null;
-
-/**
- * Crea un cliente Supabase para usar en el navegador (componentes del lado del cliente)
- * Este cliente está optimizado para su uso en componentes 'use client'
- * @returns Cliente de Supabase con tipado completo
- */
-export const createClient = () => {
-  // Si estamos en el servidor, mostramos una advertencia y devolvemos null
-  if (typeof window === 'undefined') {
-    console.warn('createClient solo debe usarse en componentes del cliente');
-    return null;
-  }
-  
+// Mejora del manejo de cliente Supabase
+export function createSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Registro detallado para depuración
-  console.log('🔍 URL de Supabase:', url);
-  console.log('🔑 Clave Anónima presente:', !!anonKey);
-
-  // Validación explícita de las variables de entorno
-  if (!url) {
-    console.error('🚨 La URL de Supabase es requerida. Verifica tus variables de entorno.');
-    return null;
+  // Validación temprana de variables de entorno
+  if (!url || !anonKey) {
+    throw new Error('Las variables de entorno de Supabase no están configuradas correctamente');
   }
 
-  if (!anonKey) {
-    console.error('🚨 La Clave Anónima de Supabase es requerida. Verifica tus variables de entorno.');
-    return null;
+  // Usar entorno de desarrollo para depuración
+  if (process.env.NODE_ENV === 'development') {
+    console.info('Inicializando cliente Supabase:', { url });
   }
-  
-  // Singleton para evitar múltiples instancias
+
+  try {
+    return createBrowserClient<Database>(url, anonKey);
+  } catch (error) {
+    console.error('Error al crear cliente Supabase:', error);
+    throw error;
+  }
+}
+
+// Singleton para evitar múltiples instancias
+let browserClient: ReturnType<typeof createBrowserClient<Database>> | undefined;
+
+export function getSupabaseBrowserClient() {
+  // Verificar que solo se ejecute en el navegador
+  if (typeof window === 'undefined') {
+    throw new Error('Este cliente solo puede usarse en el navegador');
+  }
+
+  // Crear cliente solo una vez
   if (!browserClient) {
-    try {
-      browserClient = createBrowserClient<Database>(url, anonKey);
-      console.log('✅ Cliente Supabase creado exitosamente');
-    } catch (error) {
-      console.error('🚨 Error al crear el cliente de Supabase:', error);
-      return null;
-    }
+    browserClient = createSupabaseClient();
   }
 
   return browserClient;
-};
+}

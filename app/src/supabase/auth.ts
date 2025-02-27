@@ -1,4 +1,4 @@
-import { createClient } from './client';
+import { getSupabaseBrowserClient } from '../client';
 
 // Definimos los tipos aquí para evitar problemas de importación
 interface AuthError {
@@ -6,7 +6,30 @@ interface AuthError {
   status?: number;
 }
 
-interface AuthResponse<T = any> {
+interface User {
+  id: string;
+  email: string;
+}
+
+interface Session {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  token_type: string;
+  user: User;
+}
+
+interface AuthData {
+  user: User;
+  session: Session;
+}
+
+interface SignInResponse {
+  data: AuthData | null;
+  error: AuthError | null;
+}
+
+interface AuthResponse<T = AuthData> {
   data: T | null;
   error: AuthError | null;
 }
@@ -51,7 +74,7 @@ const supabase = (() => {
   }
   
   // En el cliente, creamos el cliente Supabase real
-  const client = createClient();
+  const client = getSupabaseBrowserClient();
   
   // Si no se puede crear el cliente, lanzamos un error más descriptivo
   if (!client) {
@@ -65,32 +88,44 @@ const supabase = (() => {
 /**
  * Funciones de autenticación para uso en componentes del lado del cliente
  */
+const handleAuthError = (error: any): AuthResponse => {
+  return { 
+    data: null, 
+    error: { 
+      message: error.message || 'Error desconocido',
+      status: error.status
+    } 
+  };
+};
+
 export const auth = {
   /**
    * Inicia sesión con email y contraseña
    * @param email - Email del usuario
    * @param password - Contraseña del usuario
    */
-  signIn: async (email: string, password: string): Promise<AuthResponse> => {
+  signIn: async (email: string, password: string): Promise<SignInResponse> => {
     try {
       const response = await supabase.auth.signInWithPassword({
         email,
-        password
+        password,
       });
-      
+
       if (response.error) {
         throw response.error;
       }
-      
-      return { data: response.data, error: null };
+
+      const user = response.data.user;
+      const session = response.data.session;
+
+      // Verificar que user y session no sean null
+      if (!user || !session) {
+        throw new Error('User or session is null');
+      }
+
+      return { data: { user, session }, error: null };
     } catch (error: any) {
-      return { 
-        data: null, 
-        error: { 
-          message: error.message || 'Error al iniciar sesión',
-          status: error.status
-        } 
-      };
+      return handleAuthError(error);
     }
   },
   
@@ -100,7 +135,7 @@ export const auth = {
    * @param password - Contraseña del usuario
    * @param userData - Datos adicionales del usuario (opcional)
    */
-  signUp: async (email: string, password: string, userData: Record<string, any> = {}): Promise<AuthResponse> => {
+  signUp: async (email: string, password: string, userData: Record<string, unknown> = {}): Promise<AuthResponse> => {
     try {
       const response = await supabase.auth.signUp({
         email,
@@ -117,13 +152,7 @@ export const auth = {
       
       return { data: response.data, error: null };
     } catch (error: any) {
-      return { 
-        data: null, 
-        error: { 
-          message: error.message || 'Error al registrarse',
-          status: error.status
-        } 
-      };
+      return handleAuthError(error);
     }
   },
   
@@ -140,13 +169,7 @@ export const auth = {
       
       return { data: null, error: null };
     } catch (error: any) {
-      return { 
-        data: null, 
-        error: { 
-          message: error.message || 'Error al cerrar sesión',
-          status: error.status
-        } 
-      };
+      return handleAuthError(error);
     }
   },
   
@@ -169,13 +192,7 @@ export const auth = {
       
       return { data: response.data, error: null };
     } catch (error: any) {
-      return { 
-        data: null, 
-        error: { 
-          message: error.message || `Error al iniciar sesión con ${provider}`,
-          status: error.status
-        } 
-      };
+      return handleAuthError(error);
     }
   },
   
@@ -192,13 +209,7 @@ export const auth = {
       
       return { data: data.session, error: null };
     } catch (error: any) {
-      return { 
-        data: null, 
-        error: { 
-          message: error.message || 'Error al obtener la sesión',
-          status: error.status
-        } 
-      };
+      return handleAuthError(error);
     }
   },
   
@@ -215,13 +226,7 @@ export const auth = {
       
       return { data: data.user, error: null };
     } catch (error: any) {
-      return { 
-        data: null, 
-        error: { 
-          message: error.message || 'Error al obtener el usuario',
-          status: error.status
-        } 
-      };
+      return handleAuthError(error);
     }
   },
   
@@ -240,13 +245,7 @@ export const auth = {
       
       return { data: null, error: null };
     } catch (error: any) {
-      return { 
-        data: null, 
-        error: { 
-          message: error.message || 'Error al enviar el enlace de recuperación',
-          status: error.status
-        } 
-      };
+      return handleAuthError(error);
     }
   },
   
@@ -265,16 +264,10 @@ export const auth = {
       
       return { data: response.data, error: null };
     } catch (error: any) {
-      return { 
-        data: null, 
-        error: { 
-          message: error.message || 'Error al actualizar la contraseña',
-          status: error.status
-        } 
-      };
+      return handleAuthError(error);
     }
   }
 };
 
 // Re-exportamos los tipos para que estén disponibles al importar este módulo
-export type { AuthError, AuthResponse };
+export type { AuthError, AuthResponse, AuthData, User, Session };

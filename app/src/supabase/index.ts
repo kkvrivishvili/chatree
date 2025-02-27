@@ -1,6 +1,6 @@
 // Exportación de clientes
-export { createClient } from './client';
-export { createSupabaseServerClient, createSupabaseServerAdminClient, getSession, getUser } from './server';
+export { getSupabaseBrowserClient } from './client';
+export { createSupabaseServerClient, getSession, getUser } from './server';
 
 // Exportación de autenticación
 export { auth } from './auth';
